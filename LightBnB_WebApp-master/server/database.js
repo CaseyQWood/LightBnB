@@ -119,7 +119,7 @@ const getAllProperties = (options, limit = 10) => {
   `;
   console.log('this is options',options)
   if (options.city) {
-    queryParams.push(`%${options.city}%`);
+    queryParams.push(`%${options.city.substring(1, options.city.length - 1)}%`);
     queryString += `AND city LIKE $${queryParams.length} `;
   }
   if (options.minimum_price_per_night) {
@@ -135,7 +135,7 @@ const getAllProperties = (options, limit = 10) => {
     queryString += `AND rating > $${queryParams.length} `;
   }
   if (options.owner_id) {
-    queryParams.push(`${options.minimum_rating}`);
+    queryParams.push(`${options.owner_id}`);
     queryString += `AND owner_id = $${queryParams.length} `;
   }
 
