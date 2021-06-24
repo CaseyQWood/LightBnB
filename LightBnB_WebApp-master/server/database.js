@@ -107,20 +107,62 @@ exports.getAllReservations = getAllReservations;
  * @return {Promise<[{}]>}  A promise to the properties.
  */
 
-  const getAllProperties = (options, limit = 10) => {
+const getAllProperties = (options, limit = 10) => {
 
-    return pool.query(`SELECT * FROM properties LIMIT $1`, [limit])
-    .then((result) => {
-      if (result.rows) {
-        return result.rows;
-      } else {
-        return null;
-      }
-    })
-    .catch((err) => {
-      console.error(err);
-    });
-  };
+  const queryParams = [];
+
+  let queryString = `
+  SELECT properties.*, avg(property_reviews.rating) as average_rating
+  FROM properties
+  JOIN property_reviews ON properties.id = property_id
+  WHERE 1=1
+  `;
+  console.log('this is options',options)
+  if (options.city) {
+    queryParams.push(`%${options.city}%`);
+    queryString += `AND city LIKE $${queryParams.length} `;
+  }
+  if (options.minimum_price_per_night) {
+    queryParams.push(`${options.minimum_price_per_night}`);
+    queryString += `AND cost_per_night > $${queryParams.length} `;
+  }
+  if (options.maximum_price_per_night) {
+    queryParams.push(`${options.maximum_price_per_night}`);
+    queryString += `AND cost_per_night < $${queryParams.length} `;
+  }
+  if (options.minimum_rating) {
+    queryParams.push(`${options.minimum_rating}`);
+    queryString += `AND rating > $${queryParams.length} `;
+  }
+  if (options.owner_id) {
+    queryParams.push(`${options.minimum_rating}`);
+    queryString += `AND owner_id = $${queryParams.length} `;
+  }
+
+  queryParams.push(limit);
+  queryString += `
+  GROUP BY properties.id
+  ORDER BY cost_per_night
+  LIMIT $${queryParams.length};
+  `;
+
+  console.log('this is query string', queryString,'this is query params', queryParams);
+
+  return pool.query(queryString, queryParams).then((res) => res.rows);
+
+};
+
+// return pool.query(`SELECT * FROM properties LIMIT $1`, [limit])
+// .then((result) => {
+//   if (result.rows) {
+//     return result.rows;
+//   } else {
+//     return null;
+//   }
+// })
+// .catch((err) => {
+//   console.error(err);
+// });
 
 exports.getAllProperties = getAllProperties;
 
