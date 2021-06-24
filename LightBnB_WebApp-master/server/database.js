@@ -67,7 +67,7 @@ const addUser =  function(user) {
   const values = [user.name, user.email, user.password];
   return pool.query(`INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING *`, values)
   .then((results) => {
-    return results.rows[0]
+    return results.rows[0];
   })
   .catch((err) => {
     console.error(err);
@@ -84,7 +84,17 @@ exports.addUser = addUser;
  * @return {Promise<[{}]>} A promise to the reservations.
  */
 const getAllReservations = function(guest_id, limit = 10) {
-  return getAllProperties(null, 2);
+
+  const queryString = `
+    SELECT reservations.*, properties.*
+    FROM reservations
+    JOIN properties ON reservations.property_id = properties.id
+    WHERE reservations.guest_id = $1 
+    AND reservations.end_date < now()::date
+    LIMIT $2`;
+
+  return pool.query(queryString,[guest_id, limit])
+  .then((result) => result.rows)
 }
 exports.getAllReservations = getAllReservations;
 
@@ -98,6 +108,7 @@ exports.getAllReservations = getAllReservations;
  */
 
   const getAllProperties = (options, limit = 10) => {
+
     return pool.query(`SELECT * FROM properties LIMIT $1`, [limit])
     .then((result) => {
       if (result.rows) {
